@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AttendanceGateway } from './attendance-gateway.gateway';
-
+import { GoogleSheetsModule } from '../google-sheets/google-sheets.module';
+import { AttendanceGatewayService } from './attendance-gateway.service';
 
 @Module({
-  providers: [AttendanceGateway],
-  exports: [AttendanceGateway],
+  imports: [ forwardRef(() => GoogleSheetsModule)],
+  providers: [AttendanceGateway, AttendanceGatewayService],
+  exports: [AttendanceGateway, AttendanceGatewayService],
 })
 export class WebSocketModule {}

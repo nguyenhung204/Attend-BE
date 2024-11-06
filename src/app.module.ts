@@ -7,10 +7,11 @@ import { WebSocketModule } from "./attendance-gateway/attendance-gateway.module"
 
 
 @Module({
-  imports: [GoogleSheetsModule,
+  imports: [
     ConfigModule.forRoot({
       isGlobal: true, 
     }),
+    GoogleSheetsModule,
     WebSocketModule
   ],
   controllers: [GoogleSheetsController],

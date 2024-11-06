@@ -25,6 +25,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
+    "csv-parser": "^3.0.0",
     "file-save": "^0.2.0",
     "google-spreadsheet": "^4.1.4",
     "googleapis": "^144.0.0",

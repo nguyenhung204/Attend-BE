@@ -67,4 +67,16 @@ export class GoogleSheetsController {
       res.status(500).send({ message: 'Failed to download attendance' });
     }
   }
+
+  @Get('attendance-list')
+  async getAttendanceList(@Res() res: Response): Promise<void> {
+    try {
+      const attendanceList = await this.googleSheetsService.getAttendanceListFromCSV();
+      res.status(200).send(attendanceList);
+    } catch (error) {
+      console.error('Error getting attendance list:', error);
+      res.status(500).send({ message: 'Failed to get attendance list' });
+    }
+  }
+  
 }

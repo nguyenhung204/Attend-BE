@@ -13,7 +13,7 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Accept', // Allow specific headers
   });
 
-  await app.listen(process.env.PORT ?? 5000);
+  await app.listen(process.env.PORT ?? 5000, '0.0.0.0');
 }
 
 bootstrap();
