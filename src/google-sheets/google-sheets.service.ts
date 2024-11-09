@@ -7,6 +7,8 @@ import { Server } from 'socket.io';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as csvParser from 'csv-parser';
+import axios from 'axios';
+import axiosRetry from 'axios-retry';
 @Injectable(
   
 )
@@ -14,7 +16,7 @@ export class GoogleSheetsService {
   private doc: GoogleSpreadsheet;
   private cache: { mssvSet: Set<string>; rows: any[]; timestamp: number } | null = null;
   private io: Server;
-  private cacheTTL = 5000;
+  private cacheTTL = 60000;
   private serviceAccountAuth = new JWT({
     email: this.configService.get<string>('CLIENT_EMAIL'),
     key: this.configService.get<string>('PRIVATE_KEY').replace(/\\n/g, '\n'),
@@ -23,10 +25,22 @@ export class GoogleSheetsService {
   constructor(
     private configService: ConfigService,
     private attendanceGateway: AttendanceGateway
-
   ) {
     this.doc = new GoogleSpreadsheet(this.configService.get<string>('SHEET_ID'), this.serviceAccountAuth);
     this.getAttendanceListFromCSV();
+
+    // Configure axios-retry
+    axiosRetry(axios, {
+      retries: 3, // Number of retries
+      retryDelay: (retryCount) => {
+        console.log(`Retry attempt: ${retryCount}`);
+        return retryCount * 5000; // Time between retries (5 seconds)
+      },
+      retryCondition: (error) => {
+        // Retry on network errors or 5xx status codes
+        return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.response.status >= 500;
+      },
+    });
   }
 
   setSocketServer(io: Server) {
@@ -35,7 +49,23 @@ export class GoogleSheetsService {
 
   private async initialize() {
     try {
+
+      console.log('Initializing Google Sheets API...');
       await this.doc.loadInfo();
+      console.log('Google Sheets API initialized successfully.');
+
+      // Configure axios-retry
+      axiosRetry(axios, {
+        retries: 5, // Number of retries
+        retryDelay: (retryCount) => {
+          console.log(`Retry attempt: ${retryCount}`);
+          return retryCount * 5000; // Time between retries (5 seconds)
+        },
+        retryCondition: (error) => {
+          // Retry on network errors or 5xx status codes
+          return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.response.status >= 500;
+        },
+      });
     } catch (error) {
       console.error('Error initializing Google Sheets:', error);
       throw new Error('Failed to initialize Google Sheets');
@@ -44,18 +74,22 @@ export class GoogleSheetsService {
 
   private async loadData() {
     if (this.cache && (Date.now() - this.cache.timestamp < this.cacheTTL)) {
+      console.log('Using cached data...');
       return this.cache;
     }
     try {
       await this.initialize();
+      console.log('Loading data from Google Sheets...');
       const sheet = this.doc.sheetsByIndex[0];
       const rows = await sheet.getRows();
+      console.log(`Loaded ${rows.length} rows from Google Sheets.`);
       const mssvSet = new Set(rows.map(row => row.get('MSSV').trim()));
       const rowData = rows.map(row => ({
         MSSV: row.get('MSSV').trim(),
         Name: row.get('HỌ') + " " + row.get('TÊN'),
       }));
       this.cache = { mssvSet, rows: rowData, timestamp: Date.now() };
+      console.log(`Cache updated with timestamp: ${this.cache.timestamp}`);
       return this.cache;
     } catch (error) {
       console.error('Error loading data from Google Sheets:', error);
@@ -65,7 +99,9 @@ export class GoogleSheetsService {
 
   async getSheetData(): Promise<any[]> {
     try {
+      console.log('Requesting sheet data...');
       const data = await this.loadData();
+      console.log('Sheet data retrieved successfully.');
       return data.rows;
     } catch (error) {
       console.error('Error getting sheet data:', error);
@@ -75,7 +111,9 @@ export class GoogleSheetsService {
 
   async checkMSSVExists(mssvList: string[]): Promise<boolean[]> {
     try {
+      console.log('Checking MSSV existence...');
       const data = await this.loadData();
+      console.log('MSSV existence check completed.');
       return mssvList.map(mssv => data.mssvSet.has(mssv.trim()));
     } catch (error) {
       console.error('Error checking MSSV exists:', error);

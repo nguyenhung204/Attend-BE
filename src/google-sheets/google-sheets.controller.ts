@@ -6,15 +6,16 @@ import * as fs from 'fs';
 
 @Controller('google-sheets')
 export class GoogleSheetsController {
-  constructor(private readonly googleSheetsService: GoogleSheetsService) { }
+  constructor(private readonly googleSheetsService: GoogleSheetsService) {}
 
   @Get('mssv')
-  async getSheetData(): Promise<any[]> {
+  async getSheetData(@Res() res: Response): Promise<void> {
     try {
-      return await this.googleSheetsService.getSheetData();
+      const data = await this.googleSheetsService.getSheetData();
+      res.status(200).send(data);
     } catch (error) {
       console.error('Error getting sheet data:', error);
-      throw new Error('Failed to get sheet data');
+      res.status(500).send({ message: 'Failed to get sheet data' });
     }
   }
 
@@ -39,7 +40,7 @@ export class GoogleSheetsController {
 
       await this.googleSheetsService.markAttendance(mssvArray);
 
-      res.status(200).send(response);
+      res.status(200).send({ Response: response });
     } catch (error) {
       console.error('Error checking MSSV:', error);
       res.status(500).send({ message: 'Failed to check MSSV' });
@@ -78,5 +79,4 @@ export class GoogleSheetsController {
       res.status(500).send({ message: 'Failed to get attendance list' });
     }
   }
-  
 }
