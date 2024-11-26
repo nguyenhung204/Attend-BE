@@ -37,7 +37,6 @@ export class GoogleSheetsService {
         return retryCount * 5000; // Time between retries (5 seconds)
       },
       retryCondition: (error) => {
-        // Retry on network errors or 5xx status codes
         return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.response.status >= 500;
       },
     });

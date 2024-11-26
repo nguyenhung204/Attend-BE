@@ -21,7 +21,7 @@ export class AttendanceGateway implements OnGatewayConnection, OnGatewayDisconne
     // Gửi yêu cầu đồng bộ dữ liệu từ client khi server khởi động lại
     setTimeout(() => {
       this.server.emit('requestAttendanceData');
-    }, 10000); // Delay 5 seconds to ensure clients are connected
+    }, 10000); // 10 giây
 
     // Gửi yêu cầu đồng bộ dữ liệu từ client mỗi 10 giây
     setInterval(() => {
