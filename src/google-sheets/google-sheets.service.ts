@@ -82,11 +82,13 @@ export class GoogleSheetsService {
       const sheet = this.doc.sheetsByIndex[0];
       const rows = await sheet.getRows();
       console.log(`Loaded ${rows.length} rows from Google Sheets.`);
-      const mssvSet = new Set(rows.map(row => row.get('MSSV').trim()));
+      const mssvSet = new Set(rows.map(row => row.get('MSSV')?.trim()));
       const rowData = rows.map(row => ({
-        MSSV: row.get('MSSV').trim(),
+        MSSV: row.get('MSSV')?.trim(),
         Name: row.get('HỌ') + " " + row.get('TÊN'),
+        Position : row.get('GHẾ')
       }));
+
       this.cache = { mssvSet, rows: rowData, timestamp: Date.now() };
       console.log(`Cache updated with timestamp: ${this.cache.timestamp}`);
       return this.cache;
@@ -135,8 +137,8 @@ export class GoogleSheetsService {
             mapValues: ({ value }) => value.trim(),
           }))
           .on('data', (row) => {
-            if (row.MSSV && row.Name) {
-              rows.push({ MSSV: row.MSSV.trim(), Name: row.Name.trim() });
+            if (row.MSSV && row.Name ) {
+              rows.push({ MSSV: row.MSSV.trim(), Name: row.Name.trim(), 'Điểm Danh': row['Điểm Danh'].trim() });
             } else {
               console.warn('Malformed row:', row);
             }
@@ -208,7 +210,7 @@ export class GoogleSheetsService {
       // Lọc các MSSV mới chưa tồn tại trong tệp CSV
       const newRecords = mssvArray.filter(mssv => !existingMSSVSet.has(mssv)).map(mssv => {
         const row = this.cache.rows.find(row => row.MSSV === mssv);
-        return `${row.MSSV},${row.Name},X`;
+        return `${row.MSSV},${row.Name}, ${new Date().toLocaleDateString()}`;
       }).join('\n');
 
       if (newRecords) {

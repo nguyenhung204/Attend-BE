@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Res, Delete } from '@nestjs/common';
 import { GoogleSheetsService } from './google-sheets.service';
 import { Response } from 'express';
 import * as path from 'path';
@@ -77,6 +77,23 @@ export class GoogleSheetsController {
     } catch (error) {
       console.error('Error getting attendance list:', error);
       res.status(500).send({ message: 'Failed to get attendance list' });
+    }
+  }
+
+  @Delete('delete-csv')
+  async deleteCSV(@Res() res: Response): Promise<void> {
+    const filePath = path.join(__dirname, 'attendance.csv');
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log('CSV file deleted successfully');
+        res.status(200).send({ message: 'CSV file deleted successfully' });
+      } else {
+        res.status(404).send({ message: 'File not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting CSV file:', error);
+      res.status(500).send({ message: 'Failed to delete CSV file' });
     }
   }
 }
